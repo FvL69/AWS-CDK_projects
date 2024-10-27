@@ -4,7 +4,7 @@ In a multi-tier application architecture, you can introduce **extra layers of de
 
 In fact, you don't need to expose parts of your application in the public subnet at all if you use managed AWS endpoints, such as load balancers or Network Address Translation (NAT) options.  
 
-Diagram link: [Multi-tier-architecture](../includes/project_diagram/multi-tier_architecture.png)  
+Diagram link: [Multi-tier-architecture](../includes/diagram.png)  
 
 #### Layer 1: Internet access resources. (public subnets)   
 To limit exposure to the internet, you can use the following in your architecture:  
@@ -51,11 +51,13 @@ If you want to read more about this topic:  [AWS_CDK_Constructs](https://docs.aw
         - 1 private isolated. (isolated subnets do not route from or to the Internet)  
         - 1 reserved private isolated. (for future expansion of network and services)  
 
+**note**: If you specialize the stack in the app.py file **for the AWS Account and Region that are implied by the current CLI configuration**, the max AZ's is 2 due to the fact that it's unknown in which region the app is going to be deployed. (there are regions with only 2 AZ's)  
+
 ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Public Subnet will get a routetable with a route to the IGW), EIP's, Gateway attachments and a restricted default SG will be created by the L2 Vpc construct.   
 
-## 2. Create and configure AWS Services: EC2 instances, RDSdb, ALB and SG's.  
+## 2. Create and configure AWS resources: EC2 instances, RDSdb, ALB, listener, ASG and SG's.  
 
-### The AWS services.
+### The AWS resources.
  
     1. Create an EC2 Instance (Linux 2023 AMI) in each ApplicationSubnet.  
 
