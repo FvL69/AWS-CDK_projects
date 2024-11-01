@@ -1,11 +1,12 @@
 from aws_cdk import (
     Stack,
-    Duration,
     aws_ec2 as ec2,
     aws_rds as rds,
     aws_elasticloadbalancingv2 as elbv2,
     aws_elasticloadbalancingv2_targets as elbv2_target,
     # aws_autoscaling as autoscaling,
+    Duration,
+    CfnTag,
     RemovalPolicy,
 )
 from constructs import Construct
@@ -34,30 +35,30 @@ class MultiTierVpcStack(Stack):
         )
 
         
-        # SECURITY GROUPS.
+        ### SECURITY GROUPS ###
 
         # Security Group for Application Load Balancer.
         self.SG_ALB = ec2.SecurityGroup(
             self, "SG_ALB",
             vpc=self.vpc1,
             allow_all_outbound=True,
-            description="ALB security group",
+            description="Security Group for ALB",
         )
 
-        # Security Group for app_instance1.
+        # Security Group for AppInstance1.
         self.SG_App1 = ec2.SecurityGroup(
             self, "SG_App1",
             vpc=self.vpc1,
             allow_all_outbound=True,
-            description="Security Group for app_instance1"
+            description="Security Group for AppInstance1"
         )
 
-        # Security Group for app_instance2.
+        # Security Group for AppInstance2.
         self.SG_App2 = ec2.SecurityGroup(
             self, "SG_App2",
             vpc=self.vpc1,
             allow_all_outbound=True,
-            description="Security Group for app_instance2"
+            description="Security Group for AppInstance2"
         )
 
         # Security Group for RDSdb.
@@ -68,91 +69,10 @@ class MultiTierVpcStack(Stack):
             description="Security Group for RDSdb"
         )
 
-        
-
-        # SECURITY GROUP RULES.
-
-        # APPLICATION LOAD BALANCER.
-        self.SG_ALB.add_ingress_rule(
-            peer=ec2.Peer.ipv4("0.0.0.0/0"),
-            connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic",
-        )
-
-        # AppInstance1
-        # Ingress rule for HTTP from ALB.
-        self.SG_App1.add_ingress_rule(
-            peer=self.SG_ALB,
-            connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic from SG_ALB",
-        )
-        # SSH access for Admin.
-        self.SG_App1.add_ingress_rule(
-            peer=ec2.Peer.ipv4("0.0.0.0/0"), # REPLACE with Admin IP.
-            connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from admin",
-        )
-        # Ingress rule for RDSdb.
-        self.SG_App1.add_ingress_rule(
-            peer=self.SG_RDSdb,
-            connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_RDSdb",
-        )
-
-
-        # AppInstance2.
-        # Ingress rule for HTTP from ALB.
-        self.SG_App2.add_ingress_rule(
-            peer=self.SG_ALB,
-            connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic from SG_ALB",
-        )
-        # SSH access for Admin.
-        self.SG_App2.add_ingress_rule(
-            peer=ec2.Peer.ipv4("0.0.0.0/0"), # REPLACE with Admin IP.
-            connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from admin",
-        )
-        # Ingress rule for RDSdb.
-        self.SG_App2.add_ingress_rule(
-            peer=self.SG_RDSdb,
-            connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_RDSdb",
-        )
-
-
-        # RDS database.
-        # Ingress rule for AppInstance1.
-        self.SG_RDSdb.add_ingress_rule(
-            peer=self.SG_App1,
-            connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_App1",
-        )
-        # Ingress rule for AppInstance2.
-        self.SG_RDSdb.add_ingress_rule(
-            peer=self.SG_App2,
-            connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_App2",
-        )
-        # SSH access for Admin.
-        self.SG_RDSdb.add_ingress_rule(
-            peer=ec2.Peer.ipv4("0.0.0.0/0"), # Insert Admin IP.
-            connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from admin",
-        )
-
-
-        # Create Admin keypair.
-        self.adminKey = ec2.KeyPair(
-            self, "adminKeyPair",
-            format=ec2.KeyPairFormat.PEM,
-            type=ec2.KeyPairType.RSA,
-            key_pair_name="adminKeyPair",
-        )
 
         
         # EC2 instance to host an application in ApplicationSubnet1.
-        self.app_instance1 = ec2.Instance(
+        self.AppInstance1 = ec2.Instance(
             self, "App-Instance1",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
@@ -169,14 +89,13 @@ class MultiTierVpcStack(Stack):
                     )
                 )
             ],
-            key_pair=self.adminKey,
             security_group=self.SG_App1,
             user_data=None,
         )
             
         
         # EC2 instance to host an application in ApplicationSubnet2.
-        self.app_instance2 = ec2.Instance(
+        self.AppInstance2 = ec2.Instance(
             self, "App-Instance2",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
@@ -193,7 +112,6 @@ class MultiTierVpcStack(Stack):
                     )
                 )
             ],
-            key_pair=self.adminKey,
             security_group=self.SG_App2,
             user_data=None,
         )
@@ -233,8 +151,8 @@ class MultiTierVpcStack(Stack):
         )
         
         # Add targets to the target group.
-        self.targetgroup.add_target(elbv2_target.InstanceTarget(self.app_instance1))
-        self.targetgroup.add_target(elbv2_target.InstanceTarget(self.app_instance2))
+        self.targetgroup.add_target(elbv2_target.InstanceTarget(self.AppInstance1))
+        self.targetgroup.add_target(elbv2_target.InstanceTarget(self.AppInstance2))
 
 
         # HTTP listener.
@@ -267,4 +185,83 @@ class MultiTierVpcStack(Stack):
             delete_automated_backups=True,
             deletion_protection=False
         )
-   
+
+
+
+        ### SECURITY GROUP RULES. ###
+
+        # Application Load Balancer.
+        # Ingress from internet.
+        self.SG_ALB.add_ingress_rule(
+            peer=ec2.Peer.ipv4("0.0.0.0/0"),
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP traffic",
+        )
+
+        # AppInstance1
+        # Ingress rule for SSH from EIC Endpoint.
+        self.SG_App1.add_ingress_rule(
+            peer=self.SG_App1,
+            connection=ec2.Port.tcp(22),
+            description="Allow SSH traffic from EIC_Endpoint",
+        )
+        # Ingress rule for HTTP from ALB.
+        self.SG_App1.add_ingress_rule(
+            peer=self.SG_ALB,
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP traffic from SG_ALB",
+        )
+        # Ingress rule for RDSdb.
+        self.SG_App1.add_ingress_rule(
+            peer=self.SG_RDSdb,
+            connection=ec2.Port.tcp(3306),
+            description="Allow MySQL traffic from SG_RDSdb",
+        )
+
+
+        # AppInstance2.
+        # Ingress rule for SSH from EIC Endpoint.
+        self.SG_App2.add_ingress_rule(
+            peer=self.SG_App2,
+            connection=ec2.Port.tcp(22),
+            description="Allow SSH traffic from EIC_Endpoint",
+        )
+        # Ingress rule for HTTP from ALB.
+        self.SG_App2.add_ingress_rule(
+            peer=self.SG_ALB,
+            connection=ec2.Port.tcp(80),
+            description="Allow HTTP traffic from SG_ALB",
+        )
+        # Ingress rule for RDSdb.
+        self.SG_App2.add_ingress_rule(
+            peer=self.SG_RDSdb,
+            connection=ec2.Port.tcp(3306),
+            description="Allow MySQL traffic from SG_RDSdb",
+        )
+
+
+        # RDS database.
+        # Ingress rule for AppInstance1.
+        self.SG_RDSdb.add_ingress_rule(
+            peer=self.SG_App1,
+            connection=ec2.Port.tcp(3306),
+            description="Allow MySQL traffic from SG_App1",
+        )
+        # Ingress rule for AppInstance2.
+        self.SG_RDSdb.add_ingress_rule(
+            peer=self.SG_App2,
+            connection=ec2.Port.tcp(3306),
+            description="Allow MySQL traffic from SG_App2",
+        )
+
+
+        # SSH access for admin through EC2InstanceConnect Endpoint.
+        self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
+            self, "ec2InstanceConnectEndpoint",
+            subnet_id=self.vpc1.select_subnets(
+                availability_zones=[self.vpc1.availability_zones[0]],
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,).subnets[0].subnet_id,
+            security_group_ids=[self.SG_App1.security_group_id, self.SG_App2.security_group_id],
+            tags=[CfnTag(key="Name", value="EIC_Endpoint")],
+        )
+        
