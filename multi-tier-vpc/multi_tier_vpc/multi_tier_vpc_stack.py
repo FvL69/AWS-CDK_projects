@@ -255,7 +255,7 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        # SSH access for admin through EC2InstanceConnect Endpoint.
+        # SSH access admin through EC2InstanceConnect Endpoint.
         self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
             self, "ec2InstanceConnectEndpoint",
             subnet_id=self.vpc1.select_subnets(
