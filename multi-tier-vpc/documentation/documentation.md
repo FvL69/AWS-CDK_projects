@@ -28,6 +28,15 @@ Brief description of what the project does and its main purpose
 - Configuration details
 - Dependencies between resources
 
+#### VPC
+
+#### EC2 
+
+#### Target group
+
+#### EIC-Endpoint
+
+
 ## Deployment Instructions
 ### Development Environment Setup
 - Steps to set up local development
