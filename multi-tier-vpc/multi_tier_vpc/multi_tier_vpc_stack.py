@@ -218,12 +218,11 @@ class MultiTierVpcStack(Stack):
         ### SECURITY GROUP RULES ###
 
         # Application Load Balancer Ingress rules.
-        #
         # Ingress rule for internet access.
         self.SG_ALB.add_ingress_rule(
             peer=ec2.Peer.ipv4("0.0.0.0/0"),
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic",
+            description="Allow inbound HTTP traffic from Internet.",
         )
 
         # # Application Load Balancer Egress rules.
@@ -231,191 +230,184 @@ class MultiTierVpcStack(Stack):
         self.SG_ALB.add_egress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to AppInstance1",
+            description="Allow outbound HTTP traffic to AppInstance1",
         )
         # Egress rule to SG_App2.
         self.SG_ALB.add_egress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to AppInstance2",
+            description="Allow outbound HTTP traffic to AppInstance2",
         )
 
 
 
         # AppInstance1 ingress rules.
-        #
         # Ingress rule from EIC Endpoint.
         self.SG_App1.add_ingress_rule(
             peer=self.SG_EIC_Endpoint,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from EIC_Endpoint",
+            description="Allow inbound SSH traffic from EIC_Endpoint",
         )
         # Ingress rule from ALB.
         self.SG_App1.add_ingress_rule(
             peer=self.SG_ALB,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic from SG_ALB",
+            description="Allow inbound HTTP traffic from SG_ALB",
         )
         # Ingress rule from RDSdb.
         self.SG_App1.add_ingress_rule(
             peer=self.SG_RDSdb,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_RDSdb",
+            description="Allow inbound MySQL traffic from SG_RDSdb",
         )
 
         # AppInstance1 Egress rules.
-        #
         # Egress rule to EIC Endpoint.
         self.SG_App1.add_egress_rule(
             peer=self.SG_EIC_Endpoint,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic to EIC_Endpoint",
+            description="Allow outbound SSH traffic to EIC_Endpoint",
         )
         # Egress rule to SG_ALB.
         self.SG_App1.add_egress_rule(
             peer=self.SG_ALB,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to SG_ALB",
+            description="Allow outbound HTTP traffic to SG_ALB",
         )
         # Egress rule to SG_RDSdb.
         self.SG_App1.add_egress_rule(
             peer=self.SG_RDSdb,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic to SG_RDSdb",
+            description="Allow outbound MySQL traffic to SG_RDSdb",
         )
         # Egress rule to NATGateway on port 80.
         self.SG_App1.add_egress_rule(
             peer=ec2.Peer.ipv4("0.0.0.0/0"),
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to NatGateway",
+            description="Allow outbound HTTP traffic to NatGateway",
         )
         # Egress rule to NatGateway on port 443.
         self.SG_App1.add_egress_rule(
             peer=ec2.Peer.ipv4("0.0.0.0/0"),
             connection=ec2.Port.tcp(443),
-            description="Allow HTTPS traffic to NatGateway",
+            description="Allow outbound HTTPS traffic to NatGateway",
         )
 
 
         # AppInstance2 Ingress rules.
-        # 
         # Ingress rule from EIC Endpoint.
         self.SG_App2.add_ingress_rule(
             peer=self.SG_EIC_Endpoint,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from EIC_Endpoint",
+            description="Allow inbound SSH traffic from EIC_Endpoint",
         )
         # Ingress rule from ALB.
         self.SG_App2.add_ingress_rule(
             peer=self.SG_ALB,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic from SG_ALB",
+            description="Allow inbound HTTP traffic from SG_ALB",
         )
         # Ingress rule from RDSdb.
         self.SG_App2.add_ingress_rule(
             peer=self.SG_RDSdb,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_RDSdb",
+            description="Allow inbound MySQL traffic from SG_RDSdb",
         )
 
         # AppInstance2 Egress rules.
-        #
         # Egress rule to EIC Endpoint.
         self.SG_App2.add_egress_rule(
             peer=self.SG_EIC_Endpoint,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic to EIC_Endpoint",
+            description="Allow outbound SSH traffic to EIC_Endpoint",
         )
         # Egress rule to SG_ALB.
         self.SG_App2.add_egress_rule(
             peer=self.SG_ALB,
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to SG_ALB",
+            description="Allow outbound HTTP traffic to SG_ALB",
         )
         # Egress rule to SG_RDSdb.
         self.SG_App2.add_egress_rule(
             peer=self.SG_RDSdb,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic to SG_RDSdb",
+            description="Allow outbound MySQL traffic to SG_RDSdb",
         )
         # Egress rule to NATGateway on port 80.
         self.SG_App2.add_egress_rule(
             peer=ec2.Peer.ipv4("0.0.0.0/0"),
             connection=ec2.Port.tcp(80),
-            description="Allow HTTP traffic to NatGateway",
+            description="Allow outbound HTTP traffic to NatGateway",
         )
         # Egress rule to NatGateway on port 443.
         self.SG_App2.add_egress_rule(
             peer=ec2.Peer.ipv4("0.0.0.0/0"),
             connection=ec2.Port.tcp(443),
-            description="Allow HTTPS traffic to NatGateway",
+            description="Allow outbound HTTPS traffic to NatGateway",
         )
 
 
         # RDS database Ingress rules.
-        # 
         # Ingress rule from AppInstance1.
         self.SG_RDSdb.add_ingress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_App1",
+            description="Allow inbound MySQL traffic from SG_App1",
         )
         # Ingress rule from AppInstance2.
         self.SG_RDSdb.add_ingress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic from SG_App2",
+            description="Allow inbound MySQL traffic from SG_App2",
         )
 
         # RDS database Egress rules.
-        #
         # Egress rule to SG_App1.
         self.SG_RDSdb.add_egress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic to SG_App1",
+            description="Allow outbound MySQL traffic to SG_App1",
         )
         # Egress rule to SG_App2.
         self.SG_RDSdb.add_egress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(3306),
-            description="Allow MySQL traffic to SG_App2",
+            description="Allow outbound MySQL traffic to SG_App2",
         )
 
 
         # EIC Endpoint Ingress rules.
-        # 
         # Ingress rule from AppInstance1.
         self.SG_EIC_Endpoint.add_ingress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from SG_App1",
+            description="Allow inbound SSH traffic from SG_App1",
         )
         # Ingress rule from AppInstance2.
         self.SG_EIC_Endpoint.add_ingress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic from SG_App2",
+            description="Allow inbound SSH traffic from SG_App2",
         )        
         
         # EIC Endpoint Egress rules.
-        #
         # Egress rule to SG_App1.
         self.SG_EIC_Endpoint.add_egress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic to SG_App1",
+            description="Allow outbound SSH traffic to SG_App1",
         )
-        # Egress rule to SG_App2.
+         # Egress rule to SG_App2.
         self.SG_EIC_Endpoint.add_egress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(22),
-            description="Allow SSH traffic to SG_App2",
+            description="Allow outbound SSH traffic to SG_App2",
         )
+
+        
         
 
         ### EIC_ENDPOINT and IAM POLICIES ###
-
 
         # Set variable eic_subnet_id to indicate specific subnet in: PolicyStatement => resources config.
         eic_subnet_id = self.vpc1.select_subnets(
@@ -429,24 +421,24 @@ class MultiTierVpcStack(Stack):
                 iam.PolicyStatement(
                     sid="EIC_Endpoint_Policy",
                     effect=iam.Effect.ALLOW,
+                    # An iam:CreateServiceLinkedRole is created upon EIC_Endpoint creation by EC2 in IAM automatically.
                     actions=[
                         "ec2:CreateInstanceConnectEndpoint",
-                        "ec2:DeleteInstanceConnectEndpoint",
                         "ec2:CreateNetworkInterface",
                         "ec2:CreateTags",
                         "ec2:DescribeInstanceConnectEndpoints",
-                        "iam:CreateServiceLinkedRole",
+                        "ec2:DeleteInstanceConnectEndpoint",
                     ],
-                    # Stack.of(self) is a method call on the Stack class, .region and .account are properties of the Stack 
-                    # instance that give you the AWS region and account ID where the stack is being deployed.
-                    resources=[f"arn:aws:ec2:{Stack.of(self).region}:{Stack.of(self).account}:/{eic_subnet_id}"],
+                    # .region and .account are properties of the Stack instance that give you 
+                    # the AWS region and account ID where the stack is being deployed.
+                    resources=[f"arn:aws:ec2:{self.region}:{self.account}:/{eic_subnet_id}"],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
                         "ec2:CreateNetworkInterface"
                     ],
-                    resources=[f"arn:aws:ec2:{self.region}:{self.account}:security-group/{self.SG_EIC_Endpoint.security_group_id}"]
+                    resources=[f"arn:aws:ec2:{self.region}:{self.account}:security-group/*"]
                 ),
                 iam.PolicyStatement(
                     sid="DescribeInstanceConnectEndpoints",
@@ -457,13 +449,13 @@ class MultiTierVpcStack(Stack):
                     resources=["*"]
                 )
             ]   
-        )
-           
+        )       
 
         # EC2 Instance Connect Endpoint.
         self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
             self, "ec2InstanceConnectEndpoint",
-            client_token=str(uuid.uuid4()), # Prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself. 
+            # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
+            client_token=str(uuid.uuid4()), #  uuid4 generates a random UUID and converts it to a string.
             preserve_client_ip=True, # Client IP is used when connecting to a resource, if False the ENI IP address is used.
             subnet_id=self.vpc1.select_subnets(
                 availability_zones=[self.vpc1.availability_zones[0]],
@@ -471,4 +463,47 @@ class MultiTierVpcStack(Stack):
             security_group_ids=[self.SG_EIC_Endpoint.security_group_id],
             tags=[CfnTag(key="Name", value="EIC_Endpoint")],
         )
-        
+
+        # Adding additional permissions to use EC2 Instance Connect Endpoint to connect to instances.
+        self.EIC_Endpoint_Policy.add_statements(
+            iam.PolicyStatement(
+                sid="EC2InstanceConnect",
+                actions=["ec2-instance-connect:openTunnel"],
+                effect=iam.Effect.ALLOW,
+                resources=f"arn:aws:ec2:{self.region}:{self.account}:instance-connect-endpoint/{self.EIC_Endpoint.attr_id}",
+                conditions={
+                    "NumericEquals": {
+                        "ec2-instance-connect:remotePort": 22,
+                    },
+                    "IpAddress": {
+                        "ec2-instance-connect:privateIpAddress": [
+                            "10.0.2.0/23", # CIDR for AppInstance1
+                            "10.0.4.0/23", # CIDR for AppInstance2
+                        ]
+                    },
+                    "NumericLessThanEquals": {
+                        "ec2-instance-connect:maxTunnelDuration": 3600,
+                    },
+                }
+           ),
+            iam.PolicyStatement(
+                sid="SSHPublicKey",
+                actions=["ec2-instance-connect:SendSSHPublicKey"],
+                effect=iam.Effect.ALLOW,
+                resources=["*"],
+                conditions={
+                    "StringEquals": {
+                        "ec2:osuser": "ec2-user"
+                    },
+                }
+            ),
+            iam.PolicyStatement(
+                sid="Describe",
+                actions=[
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeInstanceConnectEndpoint",
+                ],
+                effect=iam.Effect.ALLOW,
+                resources=["*"]
+            )
+        )
