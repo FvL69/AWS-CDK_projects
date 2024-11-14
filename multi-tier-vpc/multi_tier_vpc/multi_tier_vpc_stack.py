@@ -12,7 +12,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 import uuid
-from aws_cdk import aws_iam as iam
+import os
 
 class MultiTierVpcStack(Stack):
 
@@ -409,6 +409,26 @@ class MultiTierVpcStack(Stack):
 
         ### EIC_ENDPOINT and IAM POLICIES ###
 
+
+        # EC2 Instance Connect Endpoint.
+        self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
+            self, "ec2InstanceConnectEndpoint",
+            # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
+            client_token=str(uuid.uuid4()), #  uuid4 generates a random UUID and converts it to a string.
+            preserve_client_ip=True, # Client IP is used when connecting to a resource, if False the ENI IP address is used.
+            subnet_id=self.vpc1.select_subnets(
+                availability_zones=[self.vpc1.availability_zones[0]],
+                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id,
+            security_group_ids=[self.SG_EIC_Endpoint.security_group_id],
+            tags=[CfnTag(key="Name", value="EIC_Endpoint")],
+        )
+
+
+        # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess
+        # to work with in my account and CDK, which grants me all the permissions i need to create and manage the EIC Enpoint.
+        # But for practice reasons i'll create the Enpoint IAM policy and a AdminGroup to attach the IAM policy to.
+        
+
         # Set variable eic_subnet_id to indicate specific subnet in: PolicyStatement => resources config.
         eic_subnet_id = self.vpc1.select_subnets(
                 availability_zones=[self.vpc1.availability_zones[0]],
@@ -421,19 +441,20 @@ class MultiTierVpcStack(Stack):
                 iam.PolicyStatement(
                     sid="EIC_Endpoint_Policy",
                     effect=iam.Effect.ALLOW,
-                    # An iam:CreateServiceLinkedRole is created upon EIC_Endpoint creation by EC2 in IAM automatically.
                     actions=[
                         "ec2:CreateInstanceConnectEndpoint",
                         "ec2:CreateNetworkInterface",
                         "ec2:CreateTags",
                         "ec2:DescribeInstanceConnectEndpoints",
                         "ec2:DeleteInstanceConnectEndpoint",
+                        "iam:CreateServiceLinkedRole",
                     ],
                     # .region and .account are properties of the Stack instance that give you 
                     # the AWS region and account ID where the stack is being deployed.
-                    resources=[f"arn:aws:ec2:{self.region}:{self.account}:/{eic_subnet_id}"],
+                    resources=[f"arn:aws:ec2:{self.region}:{self.account}:{eic_subnet_id}"],
                 ),
                 iam.PolicyStatement(
+                    sid="CreateNetworkInterface",
                     effect=iam.Effect.ALLOW,
                     actions=[
                         "ec2:CreateNetworkInterface"
@@ -451,41 +472,28 @@ class MultiTierVpcStack(Stack):
             ]   
         )       
 
-        # EC2 Instance Connect Endpoint.
-        self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
-            self, "ec2InstanceConnectEndpoint",
-            # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
-            client_token=str(uuid.uuid4()), #  uuid4 generates a random UUID and converts it to a string.
-            preserve_client_ip=True, # Client IP is used when connecting to a resource, if False the ENI IP address is used.
-            subnet_id=self.vpc1.select_subnets(
-                availability_zones=[self.vpc1.availability_zones[0]],
-                subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id,
-            security_group_ids=[self.SG_EIC_Endpoint.security_group_id],
-            tags=[CfnTag(key="Name", value="EIC_Endpoint")],
-        )
-
         # Adding additional permissions to use EC2 Instance Connect Endpoint to connect to instances.
         self.EIC_Endpoint_Policy.add_statements(
             iam.PolicyStatement(
                 sid="EC2InstanceConnect",
                 actions=["ec2-instance-connect:openTunnel"],
                 effect=iam.Effect.ALLOW,
-                resources=f"arn:aws:ec2:{self.region}:{self.account}:instance-connect-endpoint/{self.EIC_Endpoint.attr_id}",
+                resources=[f"arn:aws:ec2:{self.region}:{self.account}:instance-connect-endpoint/{self.EIC_Endpoint.attr_id}"],
                 conditions={
                     "NumericEquals": {
                         "ec2-instance-connect:remotePort": 22,
                     },
                     "IpAddress": {
                         "ec2-instance-connect:privateIpAddress": [
-                            "10.0.2.0/23", # CIDR for AppInstance1
-                            "10.0.4.0/23", # CIDR for AppInstance2
-                        ]
+                            "10.0.2.0/23", # CIDR range for AppInstance1
+                            "10.0.4.0/23", # CIDR range for AppInstance2
+                        ],
                     },
                     "NumericLessThanEquals": {
                         "ec2-instance-connect:maxTunnelDuration": 3600,
-                    },
+                    }
                 }
-           ),
+            ),
             iam.PolicyStatement(
                 sid="SSHPublicKey",
                 actions=["ec2-instance-connect:SendSSHPublicKey"],
@@ -495,7 +503,7 @@ class MultiTierVpcStack(Stack):
                     "StringEquals": {
                         "ec2:osuser": "ec2-user"
                     },
-                }
+                },
             ),
             iam.PolicyStatement(
                 sid="Describe",
@@ -504,6 +512,18 @@ class MultiTierVpcStack(Stack):
                     "ec2:DescribeInstanceConnectEndpoint",
                 ],
                 effect=iam.Effect.ALLOW,
-                resources=["*"]
+                resources=["*"],
             )
         )
+
+
+        # Create IAM User_Group.
+        self.AdminGroup = iam.Group(
+            self, "AdminGroup",
+            group_name="AdminGroup",
+        )
+
+        # Attach Endpoint policy to 'Admin' group.
+        self.EIC_Endpoint_Policy.attach_to_group(self.AdminGroup)
+
+
