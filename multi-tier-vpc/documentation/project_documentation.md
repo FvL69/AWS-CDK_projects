@@ -94,10 +94,7 @@ ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Pub
         - Connection attempts are logged in AWS CloudTrail. (auditing purposes)  
         - No additional costs but for cross AZ data transfer, see link DataTransferCosts at top.
 
-        principals=[
-    # Using the current SSO role as the principal.
-    iam.ArnPrincipal(os.getenv("AWS_ROLE_ARN"))
-]
+        
 
 
 

@@ -425,8 +425,10 @@ class MultiTierVpcStack(Stack):
 
 
         # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess
-        # to work with in my account and CDK, which grants me all the permissions i need to create and manage the EIC Enpoint.
+        # to work with in my account and CDK (e.g. Bootstrapping, cdk deploy and cdk destroy commands.), 
+        # which grant me all the permissions i need to create and manage the EIC Enpoint.
         # But for practice reasons i'll create the Enpoint IAM policy and a AdminGroup to attach the IAM policy to.
+        # Any work force users would be added to the AdminGroup manually in the console.
         
 
         # Set variable eic_subnet_id to indicate specific subnet in: PolicyStatement => resources config.
@@ -434,7 +436,7 @@ class MultiTierVpcStack(Stack):
                 availability_zones=[self.vpc1.availability_zones[0]],
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id
 
-        # IAM policy to create, describe and delete EIC Endpoint.
+        # Identity-based IAM policy to create, describe and delete EIC Endpoint.
         self.EIC_Endpoint_Policy = iam.Policy(
             self, "EIC_Endpoint_Policy",
             statements=[
@@ -517,13 +519,13 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        # Create IAM User_Group.
+        # Create IAM Group of Users.
         self.AdminGroup = iam.Group(
             self, "AdminGroup",
             group_name="AdminGroup",
         )
 
-        # Attach Endpoint policy to 'Admin' group.
+        # Attach Endpoint policy to AdminGroup.
         self.EIC_Endpoint_Policy.attach_to_group(self.AdminGroup)
 
 
