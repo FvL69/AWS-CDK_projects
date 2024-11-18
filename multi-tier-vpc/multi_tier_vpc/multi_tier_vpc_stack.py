@@ -12,7 +12,6 @@ from aws_cdk import (
 )
 from constructs import Construct
 import uuid
-import os
 
 class MultiTierVpcStack(Stack):
 
@@ -67,7 +66,7 @@ class MultiTierVpcStack(Stack):
             security_group_name="SG_ALB",
         )
 
-        # Security Group for RDSdb.
+        # Security Group for RDS database.
         self.SG_RDSdb = ec2.SecurityGroup(
             self, "SG_RDSdb",
             vpc=self.vpc1,
@@ -86,14 +85,16 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        ### EC2 INSTANCES, APPLICATION LOAD BALANCER, TARGET GROUP, LISTENER and RDS DATABASE ###
 
-        # Import and encode the 'installWebServer.sh' user_data file to implement 
-        # a basic web server for both EC2 instances. 
-        self.encoded_user_data = ec2.UserData.for_linux().add_commands(
-            open("multi_tier_vpc/installWebServer.sh", "r").read()
-        )
+        ### EC2 INSTANCES, APPLICATION LOAD BALANCER, TARGET GROUP, LISTENER and RDS DATABASE ###
         
+
+        # Import and encode the 'user-data.sh' file to implement a basic web server for both EC2 instances. 
+        with open("multi_tier_vpc/user-data.sh", "r") as f:
+            self.user_data = ec2.UserData.for_linux().add_commands(
+            f.read()
+            )
+
         # EC2 instance ApplicationSubnet1.
         self.AppInstance1 = ec2.Instance(
             self, "App-Instance1",
@@ -113,7 +114,7 @@ class MultiTierVpcStack(Stack):
                 )
             ],
             security_group=self.SG_App1,
-            user_data=self.encoded_user_data,
+            user_data=self.user_data,
             private_ip_address="10.0.2.20",
         )
             
@@ -137,7 +138,7 @@ class MultiTierVpcStack(Stack):
                 )
             ],
             security_group=self.SG_App2,
-            user_data=self.encoded_user_data,
+            user_data=self.user_data,
             private_ip_address="10.0.4.20",
         )
        
@@ -192,7 +193,7 @@ class MultiTierVpcStack(Stack):
 
         
         
-        # RDS_db 
+        # RDS database. 
         self.RDSdb = rds.DatabaseInstance(
             self, "RDSdb",
             engine=rds.DatabaseInstanceEngine.MYSQL,
@@ -216,6 +217,7 @@ class MultiTierVpcStack(Stack):
 
 
         ### SECURITY GROUP RULES ###
+
 
         # Application Load Balancer Ingress rules.
         # Ingress rule for internet access.
@@ -377,6 +379,12 @@ class MultiTierVpcStack(Stack):
 
 
         # EIC Endpoint Ingress rules.
+        # Ingress rule for AWS API calls.
+        self.SG_EIC_Endpoint.add_ingress_rule(
+            peer=ec2.Peer.ipv4("0.0.0.0/0"),
+            connection=ec2.Port.tcp(443),
+            description="Allow inbound HTTPS traffic for AWS API calls"
+        )
         # Ingress rule from AppInstance1.
         self.SG_EIC_Endpoint.add_ingress_rule(
             peer=self.SG_App1,
@@ -391,13 +399,19 @@ class MultiTierVpcStack(Stack):
         )        
         
         # EIC Endpoint Egress rules.
+        # Egress rule for AWS API calls.
+        self.SG_EIC_Endpoint.add_egress_rule(
+            peer=ec2.Peer.ipv4("0.0.0.0/0"),
+            connection=ec2.Port.tcp(443),
+            description="Allow outbound HTTPS traffic for AWS API calls"
+        )
         # Egress rule to SG_App1.
         self.SG_EIC_Endpoint.add_egress_rule(
             peer=self.SG_App1,
             connection=ec2.Port.tcp(22),
             description="Allow outbound SSH traffic to SG_App1",
         )
-         # Egress rule to SG_App2.
+        # Egress rule to SG_App2.
         self.SG_EIC_Endpoint.add_egress_rule(
             peer=self.SG_App2,
             connection=ec2.Port.tcp(22),
@@ -405,9 +419,8 @@ class MultiTierVpcStack(Stack):
         )
 
         
-        
 
-        ### EIC_ENDPOINT and IAM POLICIES ###
+        ### EIC_ENDPOINT and IAM POLICY ###
 
 
         # EC2 Instance Connect Endpoint.
@@ -424,7 +437,7 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess
+        # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess  
         # to work with in my account and CDK (e.g. Bootstrapping, cdk deploy and cdk destroy commands.), 
         # which grant me all the permissions i need to create and manage the EIC Enpoint.
         # But for practice reasons i'll create the Enpoint IAM policy and a AdminGroup to attach the IAM policy to.
@@ -438,10 +451,10 @@ class MultiTierVpcStack(Stack):
 
         # Identity-based IAM policy to create, describe and delete EIC Endpoint.
         self.EIC_Endpoint_Policy = iam.Policy(
-            self, "EIC_Endpoint_Policy",
+            self, "EICEndpointPolicy",
             statements=[
                 iam.PolicyStatement(
-                    sid="EIC_Endpoint_Policy",
+                    sid="EICEndpointPolicy",
                     effect=iam.Effect.ALLOW,
                     actions=[
                         "ec2:CreateInstanceConnectEndpoint",

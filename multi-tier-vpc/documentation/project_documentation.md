@@ -41,15 +41,15 @@ resources in the private subnets.
     IP addresses entirely unreserved, if you prefer but the subnet numbering will be altered when deploying   
     these unreserved subnets/IP addresses.      
 
-## Project constructs:  
+## Project constructs:  [AWS_CDK_Constructs](https://docs.aws.amazon.com/cdk/v2/guide/constructs.html)
 
-    This project is build with **L2 constructs**, these are 'curated constructs' made by the AWS CDK team.     
+    This project is, for the most part, build with **L2 constructs**, these are 'curated constructs' made by the AWS CDK team.     
     Which entails that: L2 constructs include sensible default property configurations, best practice security   
     policies, and generate a lot of the boilerplate code and glue logic for you.    
 
     Which makes life easier if you don't posses advanced knowledge of AWS services to be able to build with   
-    L1 constructs yet. If you want to read more about this topic:    
-    [AWS_CDK_Constructs](https://docs.aws.amazon.com/cdk/v2/guide/constructs.html)     
+    L1 constructs yet.   
+         
 
 ## Project steps:      
 
@@ -73,9 +73,9 @@ If you configure the stack in the app.py file **for the AWS Account and Region t
 ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Public Subnet will get a routetable with a route to the IGW), EIP's, Gateway attachments and a through an IAM policy restricted default SG will be created by the L2 Vpc construct.   
 
 
-## 2. Create and configure AWS services: Security Groups, EC2 instances, RDS database, Application Load Balancer, Target Group, Listener, ASG and an EC2 Instance Connect Endpoint. 
+## 2. Create and configure AWS services: Security Groups, EC2 instances, RDS database, Application Load Balancer, Target Group, Listener, ASG, EC2 Instance Connect Endpoint and IAM policy. 
 
-#### [Diagram1](../includes/diagrams/diagram1.png)
+### [Diagram1](../includes/diagrams/diagram1.png)
 
 ## The AWS services:
  
@@ -83,16 +83,16 @@ ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Pub
 
    ### 2. Create an EC2 Instance (Linux 2023 AMI) in each ApplicationSubnet.
 
-   ### 3. Create a RDS db in DatabaseSubnet1.  
+   ### 3. Create an Application Load Balancer and attach it to the Public Subnets in both AZ's.  
+
+   ### 3a. Create a Target Group.
+
+   ### 3b. Create a Listener
+
+   ### 4. Create an Auto Scaling Group.
+
+   ### 5. Create a RDS db in DatabaseSubnet1.  
     Note: When you enable the Multi-AZ property, RDS automatically selects appropriate AZ's for the primary and standby instances  
-
-   ### 4. Create an Application Load Balancer and attach it to the Public Subnets in both AZ's.  
-
-   ### 4a. Create a Target Group.
-
-   ### 4b. Create a Listener
-
-   ### 5. Create an Auto Scaling Group.
 
    ### 6. Create an EIC_Endpoint:  
    **Links to service documentation:**   
@@ -109,11 +109,8 @@ ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Pub
         - Connection attempts are logged in AWS CloudTrail. (auditing purposes)  
         - No additional costs but for cross AZ data transfer, see link DataTransferCosts at top.
 
-        
 
-
-
-    
+   ### 7. Create IAM Policy for EIC Endpoint.
 
 ## 3. Configure: SG rules, ACL rules and routing.
 
