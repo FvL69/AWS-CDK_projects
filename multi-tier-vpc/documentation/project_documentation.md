@@ -84,6 +84,7 @@ ACL's, Routetables, SubnetRoutetableAssociations, logical routing (e.g, each Pub
    ### 2. Create an EC2 Instance (Linux 2023 AMI) in each ApplicationSubnet.
 
    ### 3. Create an Application Load Balancer and attach it to the Public Subnets in both AZ's.  
+    Note: In case of an unhealthy target: check SG config or EC2 user data input.
 
    ### 3a. Create a Target Group.
 
