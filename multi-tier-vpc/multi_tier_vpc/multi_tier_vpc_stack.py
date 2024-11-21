@@ -437,10 +437,8 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess  
-        # to work with in my account and CDK (e.g. Bootstrapping, cdk deploy and cdk destroy commands.), 
-        # which grant me all the permissions i need to create and manage the EIC Enpoint.
-        # But for practice i'll create the Enpoint IAM policy and an AdminGroup to attach the IAM policy to.
+        
+        # Create the Enpoint IAM policy and an AdminGroup to attach the IAM policy to.
         # Any work force users would be added to the AdminGroup manually in the console.
         
 
