@@ -7,8 +7,8 @@ from aws_cdk import (
     # aws_autoscaling as autoscaling,
     aws_rds as rds,
     Duration,
-    CfnTag,
     RemovalPolicy,
+    CfnTag,
 )
 from constructs import Construct
 import uuid
@@ -97,7 +97,7 @@ class MultiTierVpcStack(Stack):
 
         # EC2 instance ApplicationSubnet1.
         self.AppInstance1 = ec2.Instance(
-            self, "App-Instance1",
+            self, "AppInstance1",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
             vpc=self.vpc1,
@@ -121,7 +121,7 @@ class MultiTierVpcStack(Stack):
         
         # EC2 instance ApplicationSubnet2.
         self.AppInstance2 = ec2.Instance(
-            self, "App-Instance2",
+            self, "AppInstance2",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
             vpc=self.vpc1,
@@ -440,7 +440,7 @@ class MultiTierVpcStack(Stack):
         # For me personally the following IAM policy is not necessary since i use AWSReservedSSO_AdministratorAccess  
         # to work with in my account and CDK (e.g. Bootstrapping, cdk deploy and cdk destroy commands.), 
         # which grant me all the permissions i need to create and manage the EIC Enpoint.
-        # But for practice reasons i'll create the Enpoint IAM policy and a AdminGroup to attach the IAM policy to.
+        # But for practice i'll create the Enpoint IAM policy and an AdminGroup to attach the IAM policy to.
         # Any work force users would be added to the AdminGroup manually in the console.
         
 
@@ -532,7 +532,7 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        # Create IAM Group of Users.
+        # Create an IAM Group of Users.
         self.AdminGroup = iam.Group(
             self, "AdminGroup",
             group_name="AdminGroup",
