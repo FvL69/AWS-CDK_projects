@@ -15,4 +15,4 @@ Diagram link: [InitialDiagram](./includes/diagrams/diagram0.png)
 
 Project docs: [Project_documentation](./documentation/project_documentation.md)       
 
-Project code: [Project_code](./multi_tier_vpc/multi_tier_vpc_stack.py)  
+Project code: [Project_code](./multi_tier_architecture/multi_tier_architecture_stack.py)  

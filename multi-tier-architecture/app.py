@@ -3,11 +3,11 @@ import os
 
 import aws_cdk as cdk
 
-from multi_tier_vpc.multi_tier_vpc_stack import MultiTierVpcStack
+from multi_tier_architecture.multi_tier_architecture_stack import MultiTierArchitectureStack
 
 
 app = cdk.App()
-MultiTierVpcStack(app, "MultiTierVpcStack",
+MultiTierArchitectureStack(app, "MultiTierArchitectureStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -20,7 +20,7 @@ MultiTierVpcStack(app, "MultiTierVpcStack",
     # Uncomment the next line if you know exactly what Account and Region you
     # want to deploy the stack to. */
 
-    #env=cdk.Environment(account='xxxxxxxxxxx', region='xxxxxxxxxx'),
+    #env=cdk.Environment(account='123456789012', region='us-east-1'),
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )

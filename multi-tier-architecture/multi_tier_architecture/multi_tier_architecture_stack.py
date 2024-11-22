@@ -13,7 +13,7 @@ from aws_cdk import (
 from constructs import Construct
 import uuid
 
-class MultiTierVpcStack(Stack):
+class MultiTierArchitectureStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -90,7 +90,7 @@ class MultiTierVpcStack(Stack):
         
 
         # Import and encode the 'user-data.sh' file to implement a basic web server for both EC2 instances. 
-        with open("multi_tier_vpc/user-data.sh", "r") as f:
+        with open("multi_tier_architecture/user-data.sh", "r") as f:
             self.user_data = ec2.UserData.for_linux().add_commands(
             f.read()
             )
@@ -437,11 +437,9 @@ class MultiTierVpcStack(Stack):
         )
 
 
-        
         # Create the Enpoint IAM policy and an AdminGroup to attach the IAM policy to.
         # Any work force users would be added to the AdminGroup manually in the console.
         
-
         # Set variable eic_subnet_id to indicate specific subnet in: PolicyStatement => resources config.
         eic_subnet_id = self.vpc1.select_subnets(
                 availability_zones=[self.vpc1.availability_zones[0]],
@@ -462,8 +460,8 @@ class MultiTierVpcStack(Stack):
                         "ec2:DeleteInstanceConnectEndpoint",
                         "iam:CreateServiceLinkedRole",
                     ],
-                    # .region and .account are properties of the Stack instance that give you 
-                    # the AWS region and account ID where the stack is being deployed.
+                    # .region and .account are properties of the Stack instance that gives you 
+                    # the AWS region and account ID where the stack will be deployed.
                     resources=[f"arn:aws:ec2:{self.region}:{self.account}:{eic_subnet_id}"],
                 ),
                 iam.PolicyStatement(
@@ -538,5 +536,3 @@ class MultiTierVpcStack(Stack):
 
         # Attach Endpoint policy to AdminGroup.
         self.EIC_Endpoint_Policy.attach_to_group(self.AdminGroup)
-
-
