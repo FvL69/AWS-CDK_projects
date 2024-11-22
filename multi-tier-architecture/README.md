@@ -1,4 +1,3 @@
-
 # Multi-Tier VPC project.  
 
 The goal of this project is to show how to strengthen security by customizing an Amazon VPC, and limit  
@@ -16,3 +15,7 @@ Diagram link: [InitialDiagram](./includes/diagrams/diagram0.png)
 Project docs: [Project_documentation](./documentation/project_documentation.md)       
 
 Project code: [Project_code](./multi_tier_architecture/multi_tier_architecture_stack.py)  
+
+
+
+

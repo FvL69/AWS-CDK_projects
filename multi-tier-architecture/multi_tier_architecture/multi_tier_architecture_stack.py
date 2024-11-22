@@ -19,7 +19,7 @@ class MultiTierArchitectureStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         self.vpc1 = ec2.Vpc(
-            self, "Multi-tier_vpc",
+            self, "VPC1",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/20"), # A /20 cidr gives 4096 ip addresses to work with.
             create_internet_gateway=True,
             enable_dns_hostnames=True,
@@ -89,12 +89,11 @@ class MultiTierArchitectureStack(Stack):
         ### EC2 INSTANCES, APPLICATION LOAD BALANCER, TARGET GROUP, LISTENER and RDS DATABASE ###
         
 
-        # Import and encode the 'user-data.sh' file to implement a basic web server for both EC2 instances. 
-        with open("multi_tier_architecture/user-data.sh", "r") as f:
-            self.user_data = ec2.UserData.for_linux().add_commands(
-            f.read()
-            )
-
+        # Import and encode the 'user-data.sh' file to implement a basic web server for both EC2 instances.
+        f = open("multi_tier_architecture/user-data.sh", "r")
+        self.user_data = ec2.UserData.for_linux().add_commands(f.read())
+        f.close()
+        
         # EC2 instance ApplicationSubnet1.
         self.AppInstance1 = ec2.Instance(
             self, "AppInstance1",
@@ -418,10 +417,8 @@ class MultiTierArchitectureStack(Stack):
             description="Allow outbound SSH traffic to SG_App2",
         )
 
-        
 
         ### EIC_ENDPOINT and IAM POLICY ###
-
 
         # EC2 Instance Connect Endpoint.
         self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
