@@ -90,9 +90,11 @@ class MultiTierArchitectureStack(Stack):
         
 
         # Import and encode the 'user-data.sh' file to implement a basic web server for both EC2 instances.
-        f = open("multi_tier_architecture/user-data.sh", "r")
-        self.user_data = ec2.UserData.for_linux().add_commands(f.read())
-        f.close()
+        with open("multi_tier_architecture/user-data.sh", "r") as f:
+            user_data = f.read()
+
+        self.user_data = ec2.UserData.for_linux().custom(user_data)
+
         
         # EC2 instance ApplicationSubnet1.
         self.AppInstance1 = ec2.Instance(
@@ -140,7 +142,7 @@ class MultiTierArchitectureStack(Stack):
             user_data=self.user_data,
             private_ip_address="10.0.4.20",
         )
-       
+
 
         # Application Load Balancer.
         self.alb = elbv2.ApplicationLoadBalancer(
@@ -217,7 +219,6 @@ class MultiTierArchitectureStack(Stack):
 
         ### SECURITY GROUP RULES ###
 
-
         # Application Load Balancer Ingress rules.
         # Ingress rule for internet access.
         self.SG_ALB.add_ingress_rule(
@@ -239,7 +240,6 @@ class MultiTierArchitectureStack(Stack):
             connection=ec2.Port.tcp(80),
             description="Allow outbound HTTP traffic to AppInstance2",
         )
-
 
 
         # AppInstance1 ingress rules.
@@ -425,7 +425,7 @@ class MultiTierArchitectureStack(Stack):
             self, "ec2InstanceConnectEndpoint",
             # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
             client_token=str(uuid.uuid4()), #  uuid4 generates a random UUID and converts it to a string.
-            preserve_client_ip=True, # Client IP is used when connecting to a resource, if False the ENI IP address is used.
+            preserve_client_ip=True, 
             subnet_id=self.vpc1.select_subnets(
                 availability_zones=[self.vpc1.availability_zones[0]],
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id,
