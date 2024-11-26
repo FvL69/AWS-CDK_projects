@@ -26,8 +26,8 @@ class MultiTierArchitectureStack(Stack):
             enable_dns_support=True,
             max_azs=2,
             nat_gateways=2,
-            # Creating 3 subnets in each AZ as layers of defense to secure sensitive data, plus reserving an extra 
-            # private subnet for future changes of the network architecture.
+            # Creating 3 subnets in each AZ as layers of defense to secure sensitive data, plus reserving 
+            # an extra private subnet for future changes of the network architecture.
             subnet_configuration=[
                 ec2.SubnetConfiguration(cidr_mask=25, name="Ingress", subnet_type=ec2.SubnetType.PUBLIC),
                 ec2.SubnetConfiguration(cidr_mask=23, name="Application", subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
@@ -95,7 +95,7 @@ class MultiTierArchitectureStack(Stack):
 
         self.user_data = ec2.UserData.for_linux().custom(user_data)
 
-        
+
         # EC2 instance ApplicationSubnet1.
         self.AppInstance1 = ec2.Instance(
             self, "AppInstance1",
@@ -424,7 +424,7 @@ class MultiTierArchitectureStack(Stack):
         self.EIC_Endpoint = ec2.CfnInstanceConnectEndpoint(
             self, "ec2InstanceConnectEndpoint",
             # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
-            client_token=str(uuid.uuid4()), #  uuid4 generates a random UUID and converts it to a string.
+            client_token=str(uuid.uuid4()), 
             preserve_client_ip=True, 
             subnet_id=self.vpc1.select_subnets(
                 availability_zones=[self.vpc1.availability_zones[0]],
