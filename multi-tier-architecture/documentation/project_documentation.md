@@ -83,14 +83,14 @@ EIP's, Gateway attachments and a through an IAM policy restricted default SG wil
 
 ## The AWS services:
  
-   ### 1. Create Security Groups for the EC2's, RDSdb, ALB and EIC_Endpoint.
+   ### 1. Associate Security Groups with the EC2's, RDSdb, ALB and EIC_Endpoint.
    **Purpose:**  
     A security group acts as firewall on the instance level. By default all outbound traffic is allowed but i've restricted   
     this feature for more fine grained control of the data traffic. There are exeptions of incomming traffic that is   
     allowed out despite the allow_all_outbound=False setting, e.g.: 
 
    **Difficulties:**  
-    Just making sure that all the data traffic can find it's way to the intended services by applying the correct in and egress rules.  
+    Just making sure that all the data traffic can find it's way to the intended services by applying the correct rules.  
 
    ### 2. Create an EC2 Instance (Linux 2023 AMI) in each ApplicationSubnet.  
    **Purpose:**  

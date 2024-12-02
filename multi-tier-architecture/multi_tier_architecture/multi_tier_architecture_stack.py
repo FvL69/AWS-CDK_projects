@@ -18,8 +18,8 @@ class MultiTierArchitectureStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        self.vpc1 = ec2.Vpc(
-            self, "VPC1",
+        self.vpc = ec2.Vpc(
+            self, "VPC",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/20"), # A /20 cidr gives 4096 ip addresses to work with.
             create_internet_gateway=True,
             enable_dns_hostnames=True,
@@ -42,7 +42,7 @@ class MultiTierArchitectureStack(Stack):
         # Security Group for AppInstance1.
         self.SG_App1 = ec2.SecurityGroup(
             self, "SG_App1",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             allow_all_outbound=False,
             description="Security Group for AppInstance1",
             security_group_name="SG_App1",
@@ -51,7 +51,7 @@ class MultiTierArchitectureStack(Stack):
         # Security Group for AppInstance2.
         self.SG_App2 = ec2.SecurityGroup(
             self, "SG_App2",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             allow_all_outbound=False,
             description="Security Group for AppInstance2",
             security_group_name="SG_App2",
@@ -60,7 +60,7 @@ class MultiTierArchitectureStack(Stack):
         # Security Group for Application Load Balancer.
         self.SG_ALB = ec2.SecurityGroup(
             self, "SG_ALB",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             allow_all_outbound=False,
             description="Security Group for ALB",
             security_group_name="SG_ALB",
@@ -69,7 +69,7 @@ class MultiTierArchitectureStack(Stack):
         # Security Group for RDS database.
         self.SG_RDSdb = ec2.SecurityGroup(
             self, "SG_RDSdb",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             allow_all_outbound=False,
             description="Security Group for RDSdb",
             security_group_name="SG_RDSdb",
@@ -78,7 +78,7 @@ class MultiTierArchitectureStack(Stack):
         # Security Group for EIC_Endpoint.
         self.SG_EIC_Endpoint = ec2.SecurityGroup(
             self, "SG_EIC_Endpoint",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             allow_all_outbound=False,
             description="Security Group for EIC_Endpoint",
             security_group_name="SG_EIC_Endpoint",
@@ -101,8 +101,8 @@ class MultiTierArchitectureStack(Stack):
             self, "AppInstance1",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
-            vpc=self.vpc1,
-            availability_zone=self.vpc1.availability_zones[0],
+            vpc=self.vpc,
+            availability_zone=self.vpc.availability_zones[0],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
             block_devices=[ec2.BlockDevice(
                 device_name="/dev/xvda", 
@@ -125,8 +125,8 @@ class MultiTierArchitectureStack(Stack):
             self, "AppInstance2",
             instance_type=ec2.InstanceType("t2.micro"),
             machine_image=ec2.AmazonLinuxImage(generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023),
-            vpc=self.vpc1,
-            availability_zone=self.vpc1.availability_zones[1],
+            vpc=self.vpc,
+            availability_zone=self.vpc.availability_zones[1],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
             block_devices=[ec2.BlockDevice(
                 device_name="/dev/xvda",
@@ -147,7 +147,7 @@ class MultiTierArchitectureStack(Stack):
         # Application Load Balancer.
         self.alb = elbv2.ApplicationLoadBalancer(
             self, "ALB",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             desync_mitigation_mode=elbv2.DesyncMitigationMode.DEFENSIVE,
             http2_enabled=True,
             idle_timeout=Duration.seconds(60),
@@ -161,7 +161,7 @@ class MultiTierArchitectureStack(Stack):
         # Target group.
         self.targetgroup = elbv2.ApplicationTargetGroup(
             self, "TargetGroup",
-            vpc=self.vpc1,
+            vpc=self.vpc,
             load_balancing_algorithm_type=elbv2.TargetGroupLoadBalancingAlgorithmType.ROUND_ROBIN,
             port=80,
             protocol=elbv2.ApplicationProtocol.HTTP,
@@ -199,8 +199,8 @@ class MultiTierArchitectureStack(Stack):
             self, "RDSdb",
             engine=rds.DatabaseInstanceEngine.MYSQL,
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MICRO),
-            vpc=self.vpc1,
-            availability_zone=self.vpc1.availability_zones[0],
+            vpc=self.vpc,
+            availability_zone=self.vpc.availability_zones[0],
             multi_az=False, # If True: RDS will automatically create and manage a standby replica in a different AZ. 
             publicly_accessible=False,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
@@ -426,8 +426,8 @@ class MultiTierArchitectureStack(Stack):
             # Client_token prevents duplicates when retrying stack creation or modification of the EIC Endpoint itself.
             client_token=str(uuid.uuid4()), 
             preserve_client_ip=True, 
-            subnet_id=self.vpc1.select_subnets(
-                availability_zones=[self.vpc1.availability_zones[0]],
+            subnet_id=self.vpc.select_subnets(
+                availability_zones=[self.vpc.availability_zones[0]],
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id,
             security_group_ids=[self.SG_EIC_Endpoint.security_group_id],
             tags=[CfnTag(key="Name", value="EIC_Endpoint")],
@@ -438,8 +438,8 @@ class MultiTierArchitectureStack(Stack):
         # Any work force users would be added to the AdminGroup manually in the console.
         
         # Set variable eic_subnet_id to indicate specific subnet in: PolicyStatement => resources config.
-        eic_subnet_id = self.vpc1.select_subnets(
-                availability_zones=[self.vpc1.availability_zones[0]],
+        eic_subnet_id = self.vpc.select_subnets(
+                availability_zones=[self.vpc.availability_zones[0]],
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS).subnets[0].subnet_id
 
         # Identity-based IAM policy to create, describe and delete EIC Endpoint.
